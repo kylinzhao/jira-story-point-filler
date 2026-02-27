@@ -39,7 +39,10 @@ async function handleUpdateIssue(data) {
 
     // 使用配置的字段 ID,如果没有配置则使用默认值
     const fieldId = config.storyPointFieldId || 'customfield_10110';
-    requestBody.fields[fieldId] = feStoryPoints;
+
+    // 转换为数值类型
+    const numericValue = parseFloat(feStoryPoints);
+    requestBody.fields[fieldId] = isNaN(numericValue) ? null : numericValue;
 
     console.log('[Jira Filler] API Request:', {
       url: apiUrl,
