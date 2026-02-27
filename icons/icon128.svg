@@ -1,4 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <rect width="128" height="128" fill="#0052cc"/>
-  <path d="M45 10v65h18v40l42-60h-28l15-45z" fill="white"/>
+  <defs>
+    <!-- Jira 蓝色渐变 -->
+    <linearGradient id="jiraBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0052CC;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2684FF;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- 故事点圆圈渐变 -->
+    <linearGradient id="pointGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFAB00;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FF991F;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="128" height="128" rx="28" fill="url(#jiraBlue)"/>
+
+  <!-- Jira Logo 风格的方块图案 -->
+  <rect x="20" y="20" width="32" height="32" rx="6" fill="white" opacity="0.95"/>
+  <rect x="76" y="20" width="32" height="32" rx="6" fill="white" opacity="0.7"/>
+  <rect x="20" y="76" width="32" height="32" rx="6" fill="white" opacity="0.85"/>
+
+  <!-- 故事点圆圈 -->
+  <circle cx="92" cy="92" r="20" fill="url(#pointGradient)" stroke="white" stroke-width="3"/>
+
+  <!-- 故事点数字 -->
+  <text x="92" y="100" font-family="Arial, sans-serif" font-size="20" font-weight="bold"
+        text-anchor="middle" fill="white">SP</text>
 </svg>

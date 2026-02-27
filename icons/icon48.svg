@@ -1,4 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-  <rect width="48" height="48" fill="#0052cc"/>
-  <path d="M18 5v24h6v15l14-22h-9l5-17z" fill="white"/>
+  <defs>
+    <linearGradient id="jiraBlue48" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0052CC;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2684FF;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="48" height="48" rx="10" fill="url(#jiraBlue48)"/>
+
+  <!-- Jira 方块 -->
+  <rect x="8" y="8" width="12" height="12" rx="2" fill="white" opacity="0.95"/>
+  <rect x="28" y="8" width="12" height="12" rx="2" fill="white" opacity="0.7"/>
+  <rect x="8" y="28" width="12" height="12" rx="2" fill="white" opacity="0.85"/>
+
+  <!-- 故事点圆圈 -->
+  <circle cx="34" cy="34" r="8" fill="#FFAB00" stroke="white" stroke-width="1.5"/>
+
+  <!-- SP 文字 -->
+  <text x="34" y="37" font-family="Arial, sans-serif" font-size="7" font-weight="bold"
+        text-anchor="middle" fill="white">SP</text>
 </svg>
