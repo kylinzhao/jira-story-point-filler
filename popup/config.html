@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Jira Filler 配置</title>
+  <style>
+    body {
+      width: 400px;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    h2 {
+      margin: 0 0 16px 0;
+      font-size: 18px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #dfe1e6;
+      border-radius: 4px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    .help {
+      font-size: 12px;
+      color: #6b778c;
+      margin-top: 4px;
+    }
+    button {
+      background: #0052cc;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #0065ff;
+    }
+    .status {
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 14px;
+      margin-top: 12px;
+      display: none;
+    }
+    .status.success {
+      background: #e3fcef;
+      color: #006644;
+    }
+    .status.error {
+      background: #ffebe6;
+      color: #de350b;
+    }
+  </style>
+</head>
+<body>
+  <h2>Jira Filler 配置</h2>
+
+  <div class="form-group">
+    <label for="storyPointFieldId">故事点字段 ID</label>
+    <input type="text" id="storyPointFieldId" placeholder="customfield_10101">
+    <div class="help">
+      Jira 中"故事点"字段的实际 ID,例如 customfield_10101
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="apiToken">API Token (可选)</label>
+    <input type="password" id="apiToken" placeholder="如果自动提取失败可手动输入">
+    <div class="help">
+      如果自动认证失败,可以手动输入 Jira API Token
+    </div>
+  </div>
+
+  <button id="saveBtn">保存配置</button>
+
+  <div id="status" class="status"></div>
+
+  <script src="config.js"></script>
+</body>
+</html>

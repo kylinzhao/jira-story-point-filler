@@ -27,19 +27,21 @@ async function handleUpdateIssue(data) {
   const { issueId, feStoryPoints, auth, cookie, csrfToken } = data;
 
   try {
+    // 从存储中获取字段 ID 配置
+    const config = await getStoredConfig();
+
     // 构造 API 请求
     const apiUrl = `https://cjira.guazi-corp.com/rest/api/2/issue/${issueId}`;
 
-    // 注意:需要知道故事点字段的实际 ID
-    // 这里使用占位符,需要根据实际情况调整
     const requestBody = {
-      fields: {
-        // 常见的 Jira 故事点字段 ID
-        // customfield_10101, customfield_10102 等
-        // 需要根据实际情况确定
-        'customfield_10101': feStoryPoints
-      }
+      fields: {}
     };
+
+    // 使用配置的字段 ID,如果没有配置则使用默认值
+    const fieldId = config.storyPointFieldId || 'customfield_10101';
+    requestBody.fields[fieldId] = feStoryPoints;
+
+    console.log('[Jira Filler] Using field ID:', fieldId);
 
     const response = await fetch(apiUrl, {
       method: 'PUT',
@@ -96,4 +98,16 @@ async function handleBatchUpdate(data) {
     results,
     errors
   };
+}
+
+// 获取存储的配置
+async function getStoredConfig() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(['storyPointFieldId', 'apiToken'], (result) => {
+      resolve({
+        storyPointFieldId: result.storyPointFieldId || '',
+        apiToken: result.apiToken || ''
+      });
+    });
+  });
 }

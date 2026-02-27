@@ -30,6 +30,7 @@
   "action": {
     "default_popup": "popup/popup.html"
   },
+  "options_page": "popup/config.html",
   "icons": {
     "16": "icons/icon16.svg",
     "48": "icons/icon48.svg",
