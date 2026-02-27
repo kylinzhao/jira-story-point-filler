@@ -54,20 +54,25 @@ function createFloatingButton() {
 
 // 处理按钮点击
 async function handleFabClick() {
-  console.log('[Jira Filler] FAB clicked, extracting tasks...');
+  console.log('[Jira Filler] FAB clicked, starting process...');
 
   try {
-    // 首先尝试提取认证信息
+    // 显示加载提示
+    showLoadingIndicator();
+
+    // 提取认证信息
     const authInfo = await extractAuthInfo();
 
     if (!authInfo) {
-      alert('无法自动获取认证信息!\n\n请确保您已登录 Jira。\n如果问题持续,可能需要手动配置 API Token。');
+      hideLoadingIndicator();
+      showAuthErrorDialog();
       return;
     }
 
-    console.log('[Jira Filler] Auth info extracted:', authInfo.method);
-
+    // 提取任务数据
     const { allTasks, tasksToUpdate } = debugExtractTasks();
+
+    hideLoadingIndicator();
 
     if (tasksToUpdate.length === 0) {
       alert('没有找到需要更新的任务!\n\n所有任务的故事点字段都已填充。');
@@ -75,28 +80,152 @@ async function handleFabClick() {
     }
 
     // 显示确认对话框
-    const message = `找到 ${tasksToUpdate.length} 个需要更新的任务\n\n` +
-      `认证方式: ${authInfo.method}\n\n` +
-      `是否继续?`;
+    const confirmed = showConfirmDialog(tasksToUpdate, authInfo.method);
 
-    if (confirm(message)) {
-      console.log('[Jira Filler] User confirmed update');
-      // 准备更新数据
-      const updateData = {
-        tasks: tasksToUpdate,
-        auth: authInfo,
-        cookie: getCookieString(),
-        csrfToken: getCsrfToken()
-      };
-
-      // TODO: 调用 background script 执行更新
-      alert('准备更新 ' + tasksToUpdate.length + ' 个任务...\n(功能开发中)');
-      console.log('[Jira Filler] Update data prepared:', updateData);
-    } else {
+    if (!confirmed) {
       console.log('[Jira Filler] User cancelled');
+      return;
     }
+
+    // 执行更新
+    console.log('[Jira Filler] Starting batch update...');
+    showProgressIndicator(0, tasksToUpdate.length);
+
+    const updateData = {
+      tasks: tasksToUpdate,
+      auth: authInfo,
+      cookie: getCookieString(),
+      csrfToken: getCsrfToken()
+    };
+
+    // 调用 background script
+    const response = await chrome.runtime.sendMessage({
+      action: 'batchUpdate',
+      data: updateData
+    });
+
+    hideProgressIndicator();
+
+    if (response.success) {
+      showResultDialog(response.data);
+    } else {
+      showErrorDialog(response.error);
+    }
+
   } catch (error) {
+    hideLoadingIndicator();
+    hideProgressIndicator();
     console.error('[Jira Filler] Error:', error);
-    alert('提取任务数据时出错:\n' + error.message);
+    showErrorDialog(error.message);
   }
+}
+
+// 显示加载指示器
+function showLoadingIndicator() {
+  const indicator = document.createElement('div');
+  indicator.id = 'jira-filler-loading';
+  indicator.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    z-index: 10000;
+  `;
+  indicator.textContent = '正在分析任务...';
+  document.body.appendChild(indicator);
+}
+
+// 隐藏加载指示器
+function hideLoadingIndicator() {
+  const indicator = document.getElementById('jira-filler-loading');
+  if (indicator) {
+    indicator.remove();
+  }
+}
+
+// 显示确认对话框
+function showConfirmDialog(tasks, authMethod) {
+  const taskList = tasks.map((t, i) =>
+    `${i + 1}. [${t.issueId}] ${t.title}\n   ${t.feStoryPoints} → ${t.feStoryPoints}`
+  ).join('\n\n');
+
+  const message = `找到 ${tasks.length} 个需要更新的任务\n\n` +
+    `认证方式: ${authMethod}\n\n` +
+    `${taskList}\n\n` +
+    `是否继续更新?`;
+
+  return confirm(message);
+}
+
+// 显示进度指示器
+function showProgressIndicator(current, total) {
+  let indicator = document.getElementById('jira-filler-progress');
+
+  if (!indicator) {
+    indicator = document.createElement('div');
+    indicator.id = 'jira-filler-progress';
+    indicator.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      z-index: 10000;
+      min-width: 300px;
+    `;
+    document.body.appendChild(indicator);
+  }
+
+  indicator.textContent = `正在更新任务... ${current}/${total}`;
+}
+
+// 隐藏进度指示器
+function hideProgressIndicator() {
+  const indicator = document.getElementById('jira-filler-progress');
+  if (indicator) {
+    indicator.remove();
+  }
+}
+
+// 显示结果对话框
+function showResultDialog(result) {
+  const message = `更新完成!\n\n` +
+    `总计: ${result.total}\n` +
+    `成功: ${result.succeeded}\n` +
+    `失败: ${result.failed}`;
+
+  if (result.errors.length > 0) {
+    const errorList = result.errors.map(e => `- ${e.task}: ${e.error}`).join('\n');
+    alert(message + '\n\n失败任务:\n' + errorList);
+  } else {
+    alert(message);
+  }
+
+  // 刷新页面以显示更新后的数据
+  if (result.succeeded > 0) {
+    setTimeout(() => {
+      location.reload();
+    }, 2000);
+  }
+}
+
+// 显示错误对话框
+function showErrorDialog(error) {
+  alert('更新失败!\n\n错误信息: ' + error);
+}
+
+// 显示认证错误对话框
+function showAuthErrorDialog() {
+  alert('无法获取认证信息!\n\n' +
+    '请确保:\n' +
+    '1. 您已登录 Jira\n' +
+    '2. 页面已完全加载\n\n' +
+    '如果问题持续,请联系管理员。');
 }

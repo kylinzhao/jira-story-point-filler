@@ -28,3 +28,11 @@
   height: 24px;
   fill: white;
 }
+
+/* 加载和进度指示器 */
+#jira-filler-loading,
+#jira-filler-progress {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  color: #333;
+}
