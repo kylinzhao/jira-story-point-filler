@@ -53,10 +53,20 @@ function createFloatingButton() {
 }
 
 // 处理按钮点击
-function handleFabClick() {
+async function handleFabClick() {
   console.log('[Jira Filler] FAB clicked, extracting tasks...');
 
   try {
+    // 首先尝试提取认证信息
+    const authInfo = await extractAuthInfo();
+
+    if (!authInfo) {
+      alert('无法自动获取认证信息!\n\n请确保您已登录 Jira。\n如果问题持续,可能需要手动配置 API Token。');
+      return;
+    }
+
+    console.log('[Jira Filler] Auth info extracted:', authInfo.method);
+
     const { allTasks, tasksToUpdate } = debugExtractTasks();
 
     if (tasksToUpdate.length === 0) {
@@ -65,16 +75,23 @@ function handleFabClick() {
     }
 
     // 显示确认对话框
-    const message = `找到 ${tasksToUpdate.length} 个需要更新的任务:\n\n` +
-      tasksToUpdate.map((t, i) =>
-        `${i + 1}. [${t.issueId}] ${t.title}\n   FE Story Points: ${t.feStoryPoints} → 故事点: ${t.feStoryPoints}`
-      ).join('\n\n') +
-      '\n\n是否继续更新?';
+    const message = `找到 ${tasksToUpdate.length} 个需要更新的任务\n\n` +
+      `认证方式: ${authInfo.method}\n\n` +
+      `是否继续?`;
 
     if (confirm(message)) {
       console.log('[Jira Filler] User confirmed update');
-      // TODO: 调用更新逻辑
-      alert('即将开始更新...\n(功能开发中)');
+      // 准备更新数据
+      const updateData = {
+        tasks: tasksToUpdate,
+        auth: authInfo,
+        cookie: getCookieString(),
+        csrfToken: getCsrfToken()
+      };
+
+      // TODO: 调用 background script 执行更新
+      alert('准备更新 ' + tasksToUpdate.length + ' 个任务...\n(功能开发中)');
+      console.log('[Jira Filler] Update data prepared:', updateData);
     } else {
       console.log('[Jira Filler] User cancelled');
     }
