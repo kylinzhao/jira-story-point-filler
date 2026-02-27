@@ -62,19 +62,54 @@ function extractTasksFromPage() {
     const columns = row.querySelectorAll('td');
     if (columns.length === 0) return;
 
-    // 提取任务 ID (通常在第一列或链接中)
+    // 尝试从多个位置提取任务 ID
+    let issueId = null;
+    let title = '';
+
+    // 方法1: 从第一列的链接中提取
     const firstColumn = columns[0];
     const link = firstColumn.querySelector('a');
-    const issueIdMatch = link?.href.match(/([A-Z]+-\d+)/);
-    const issueId = issueIdMatch ? issueIdMatch[1] : null;
-
-    if (!issueId) {
-      console.log('[Jira Filler] Skipping row without issue ID:', index);
-      return;
+    if (link) {
+      const issueIdMatch = link.href.match(/([A-Z]+-\d+)/);
+      if (issueIdMatch) {
+        issueId = issueIdMatch[1];
+        title = link.textContent.trim();
+      }
     }
 
-    // 提取任务标题
-    const title = link?.textContent.trim() || firstColumn.textContent.trim();
+    // 方法2: 如果第一列没找到,遍历所有列查找链接
+    if (!issueId) {
+      for (const col of columns) {
+        const colLink = col.querySelector('a');
+        if (colLink) {
+          const match = colLink.href.match(/([A-Z]+-\d+)/);
+          if (match) {
+            issueId = match[1];
+            title = colLink.textContent.trim();
+            break;
+          }
+        }
+      }
+    }
+
+    // 方法3: 直接从文本中查找 (格式如 PROJ-123)
+    if (!issueId) {
+      for (const col of columns) {
+        const text = col.textContent.trim();
+        const match = text.match(/^([A-Z]+-\d+)$/);
+        if (match) {
+          issueId = match[1];
+          break;
+        }
+      }
+    }
+
+    if (!issueId) {
+      // 调试:显示前几列的内容
+      const preview = Array.from(columns).slice(0, 3).map(c => c.textContent.trim().substring(0, 20));
+      console.log(`[Jira Filler] Skipping row ${index}: no issue ID found. Columns preview:`, preview);
+      return;
+    }
 
     let feStoryPoints = '';
     let storyPoints = '';
