@@ -107,10 +107,14 @@ function showActionMenu() {
   `;
 
   // 添加点击事件
-  menu.querySelectorAll('.menu-item').forEach(item => {
+  const menuItems = menu.querySelectorAll('.menu-item');
+  console.log('[Jira Filler] Menu created with', menuItems.length, 'items');
+
+  menuItems.forEach(item => {
     item.addEventListener('click', (e) => {
       e.stopPropagation();
       const action = item.getAttribute('data-action');
+      console.log('[Jira Filler] Menu item clicked:', action);
       hideActionMenu();
 
       if (action === 'update') {
@@ -122,6 +126,7 @@ function showActionMenu() {
   });
 
   document.body.appendChild(menu);
+  console.log('[Jira Filler] Menu appended to body at position:', menuTop);
 }
 
 // 隐藏功能菜单
