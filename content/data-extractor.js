@@ -8,43 +8,54 @@ function extractTasksFromPage() {
 
   // 尝试找到任务表格
   // 根据截图,任务数据在表格中
-  const tableRows = document.querySelectorAll('table[data-entity-id] tr, .ghx-issues tr, table tr');
+  const tables = document.querySelectorAll('table');
+  console.log(`[Jira Filler] Found ${tables.length} tables`);
 
-  if (tableRows.length === 0) {
-    console.error('[Jira Filler] No table rows found');
+  if (tables.length === 0) {
+    console.error('[Jira Filler] No tables found');
     return [];
   }
 
   const tasks = [];
+  let validTable = null;
   let headerColumns = [];
+  let feStoryPointsIndex = -1;
+  let storyPointsIndex = -1;
 
-  // 首先找到表头,确定列的索引
-  tableRows.forEach((row, index) => {
-    const isHeader = row.querySelector('th') || row.classList.contains('ghx-column-header');
+  // 找到包含"故事点"和"FE Story Points"列的表格
+  for (const table of tables) {
+    const headers = table.querySelectorAll('th');
+    headerColumns = Array.from(headers).map(h => h.textContent.trim());
 
-    if (isHeader) {
-      // 提取表头列名
-      const headers = row.querySelectorAll('th, td');
-      headerColumns = Array.from(headers).map(h => h.textContent.trim());
-      console.log('[Jira Filler] Found headers:', headerColumns);
+    feStoryPointsIndex = headerColumns.findIndex(h =>
+      h.includes('FE Story Points') || h.includes('前端故事点')
+    );
+    storyPointsIndex = headerColumns.findIndex(h =>
+      h.includes('故事点') && !h.includes('FE')
+    );
 
-      // 查找关键字段的索引
-      const feStoryPointsIndex = headerColumns.findIndex(h =>
-        h.includes('FE Story Points') || h.includes('前端故事点')
-      );
-      const storyPointsIndex = headerColumns.findIndex(h =>
-        h.includes('故事点') && !h.includes('FE')
-      );
-
+    // 只使用同时包含两个字段的表格
+    if (feStoryPointsIndex >= 0 && storyPointsIndex >= 0) {
+      validTable = table;
+      console.log('[Jira Filler] Found valid table with headers:', headerColumns);
       console.log('[Jira Filler] FE Story Points index:', feStoryPointsIndex);
       console.log('[Jira Filler] Story Points index:', storyPointsIndex);
+      break;
     }
-  });
+  }
+
+  if (!validTable) {
+    console.error('[Jira Filler] No valid table found with both field columns');
+    return [];
+  }
+
+  // 提取表格中的所有数据行
+  const tableRows = validTable.querySelectorAll('tr');
 
   // 提取任务数据
   tableRows.forEach((row, index) => {
     // 跳过表头
-    if (row.querySelector('th') || row.classList.contains('ghx-column-header')) {
+    if (row.querySelector('th')) {
       return;
     }
 
@@ -65,17 +76,10 @@ function extractTasksFromPage() {
     // 提取任务标题
     const title = link?.textContent.trim() || firstColumn.textContent.trim();
 
-    // 根据表头索引提取字段
-    const feStoryPointsIndex = headerColumns.findIndex(h =>
-      h.includes('FE Story Points') || h.includes('前端故事点')
-    );
-    const storyPointsIndex = headerColumns.findIndex(h =>
-      h.includes('故事点') && !h.includes('FE')
-    );
+    let feStoryPoints = '';
+    let storyPoints = '';
 
-    let feStoryPoints = null;
-    let storyPoints = null;
-
+    // 使用找到的索引提取字段值
     if (feStoryPointsIndex >= 0 && columns[feStoryPointsIndex]) {
       feStoryPoints = columns[feStoryPointsIndex].textContent.trim();
     }
@@ -84,15 +88,17 @@ function extractTasksFromPage() {
       storyPoints = columns[storyPointsIndex].textContent.trim();
     }
 
+    // 调试:显示原始值
+    console.log(`[Jira Filler] Row ${index}: issueId=${issueId}, feSP="${feStoryPoints}", sp="${storyPoints}"`);
+
     const task = {
       issueId,
       title,
-      feStoryPoints: feStoryPoints || '',
-      storyPoints: storyPoints || '',
+      feStoryPoints,
+      storyPoints,
       rowIndex: index
     };
 
-    console.log('[Jira Filler] Extracted task:', task);
     tasks.push(task);
   });
 
