@@ -127,3 +127,93 @@ function debugExtractTasks() {
 
   return { allTasks, tasksToUpdate };
 }
+
+/**
+ * 调试:识别页面上的所有字段
+ */
+function debugIdentifyFields() {
+  console.log('=== Jira Filler - Field Identification ===');
+
+  // 查找所有表格
+  const tables = document.querySelectorAll('table');
+  console.log(`Found ${tables.length} tables`);
+
+  tables.forEach((table, index) => {
+    console.log(`\n--- Table ${index} ---`);
+
+    const headers = table.querySelectorAll('th');
+    const headerNames = Array.from(headers).map(h => h.textContent.trim());
+    console.log('Headers:', headerNames);
+  });
+
+  // 查找所有可能包含任务数据的行
+  const allRows = document.querySelectorAll('table tr');
+  console.log(`\nTotal rows in all tables: ${allRows.length}`);
+
+  // 显示前几行的内容
+  console.log('\nFirst 5 rows:');
+  Array.from(allRows).slice(0, 5).forEach((row, i) => {
+    const cells = row.querySelectorAll('td');
+    const cellTexts = Array.from(cells).map(c => c.textContent.trim().substring(0, 30));
+    console.log(`Row ${i}:`, cellTexts);
+  });
+
+  // 查找所有包含数字的列(可能是故事点)
+  console.log('\n--- Searching for Story Point Fields ---');
+  const allCells = document.querySelectorAll('table td');
+  const numberPattern = /^[\d.]+$/;
+
+  allCells.forEach(cell => {
+    const text = cell.textContent.trim();
+    if (numberPattern.test(text)) {
+      const header = cell.closest('table')?.querySelector('th');
+      const colIndex = Array.from(cell.parentNode.children).indexOf(cell);
+      console.log(`Found number cell: "${text}" at column ${colIndex}`);
+    }
+  });
+}
+
+/**
+ * 调试:显示所有 Cookie
+ */
+function debugShowCookies() {
+  console.log('=== Cookies ===');
+  console.log(document.cookie);
+}
+
+/**
+ * 调试:显示所有 localStorage 和 sessionStorage
+ */
+function debugShowStorage() {
+  console.log('=== LocalStorage ===');
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    console.log(`${key}: ${localStorage.getItem(key)}`);
+  }
+
+  console.log('\n=== SessionStorage ===');
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const key = sessionStorage.key(i);
+    console.log(`${key}: ${sessionStorage.getItem(key)}`);
+  }
+}
+
+// 将调试函数暴露到全局作用域,方便在控制台调用
+window.jiraFillerDebug = {
+  identifyFields: debugIdentifyFields,
+  showCookies: debugShowCookies,
+  showStorage: debugShowStorage,
+  extractTasks: () => {
+    const { allTasks, tasksToUpdate } = debugExtractTasks();
+    console.log('All tasks:', allTasks);
+    console.log('Tasks to update:', tasksToUpdate);
+    return { allTasks, tasksToUpdate };
+  },
+  auth: async () => {
+    const auth = await extractAuthInfo();
+    console.log('Auth info:', auth);
+    return auth;
+  }
+};
+
+console.log('[Jira Filler] Debug tools available at window.jiraFillerDebug');
