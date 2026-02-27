@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Jira 故事点自动填充",
+  "version": "1.0.0",
+  "description": "自动将 FE Story Points 填充到故事点字段",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "*://cjira.guazi-corp.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://cjira.guazi-corp.com/secure/Dashboard.jspa*"
+      ],
+      "js": ["content/content.js"],
+      "css": ["content/styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html"
+  },
+  "icons": {
+    "16": "icons/icon16.svg",
+    "48": "icons/icon48.svg",
+    "128": "icons/icon128.svg"
+  }
+}

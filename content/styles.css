@@ -1,0 +1,30 @@
+/* Jira Story Point Filler - Styles */
+
+/* 浮动按钮 */
+#jira-filler-fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  background: #0052cc;
+  border-radius: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+  z-index: 9999;
+}
+
+#jira-filler-fab:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+#jira-filler-fab svg {
+  width: 24px;
+  height: 24px;
+  fill: white;
+}
