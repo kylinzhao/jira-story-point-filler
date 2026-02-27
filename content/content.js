@@ -54,7 +54,32 @@ function createFloatingButton() {
 
 // 处理按钮点击
 function handleFabClick() {
-  console.log('[Jira Filler] FAB clicked');
-  // TODO: 实现任务检查逻辑
-  alert('插件已激活!即将实现任务检查功能。');
+  console.log('[Jira Filler] FAB clicked, extracting tasks...');
+
+  try {
+    const { allTasks, tasksToUpdate } = debugExtractTasks();
+
+    if (tasksToUpdate.length === 0) {
+      alert('没有找到需要更新的任务!\n\n所有任务的故事点字段都已填充。');
+      return;
+    }
+
+    // 显示确认对话框
+    const message = `找到 ${tasksToUpdate.length} 个需要更新的任务:\n\n` +
+      tasksToUpdate.map((t, i) =>
+        `${i + 1}. [${t.issueId}] ${t.title}\n   FE Story Points: ${t.feStoryPoints} → 故事点: ${t.feStoryPoints}`
+      ).join('\n\n') +
+      '\n\n是否继续更新?';
+
+    if (confirm(message)) {
+      console.log('[Jira Filler] User confirmed update');
+      // TODO: 调用更新逻辑
+      alert('即将开始更新...\n(功能开发中)');
+    } else {
+      console.log('[Jira Filler] User cancelled');
+    }
+  } catch (error) {
+    console.error('[Jira Filler] Error:', error);
+    alert('提取任务数据时出错:\n' + error.message);
+  }
 }

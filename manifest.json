@@ -18,7 +18,7 @@
       "matches": [
         "*://cjira.guazi-corp.com/secure/Dashboard.jspa*"
       ],
-      "js": ["content/content.js"],
+      "js": ["content/data-extractor.js", "content/content.js"],
       "css": ["content/styles.css"],
       "run_at": "document_idle"
     }
