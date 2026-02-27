@@ -2,31 +2,43 @@
 
 ## 功能
 
-自动将"FE Story Points"字段的值填充到"故事点"字段中。
+- ✅ 自动检测 Jira 看板页面
+- ✅ 提取任务列表数据
+- ✅ 识别"FE Story Points"和"故事点"字段
+- ✅ 自动提取认证信息(Cookie/Storage)
+- ✅ 批量更新任务
+- ✅ 进度提示和结果显示
+- ✅ 字段 ID 自定义配置
+- ✅ API Token 手动配置
+- ✅ 调试工具集
+- ⏳ UI 模拟更新(降级方案,开发中)
 
 ## 安装
 
+### 开发模式安装
+
 1. 打开 Chrome 扩展管理页面: `chrome://extensions/`
-2. 开启"开发者模式"
+2. 开启右上角的"开发者模式"
 3. 点击"加载已解压的扩展程序"
 4. 选择本插件目录
 
-## 使用
+### 使用
 
 1. 打开 Jira 看板页面
 2. 点击右下角的闪电图标按钮⚡
 3. 查看待更新的任务列表
-4. 确认后批量更新
+4. 确认后自动批量更新
+5. 查看更新结果
 
-## 开发
+### 配置
 
-- Manifest V3
-- 原生 JavaScript(无框架)
-- Content Scripts + Background Service Worker
+点击插件图标,选择"选项",可以配置:
+- 故事点字段 ID
+- API Token
 
 ## 调试
 
-插件加载后,可以在浏览器控制台使用以下调试命令:
+插件加载后,在浏览器控制台可以使用以下调试命令:
 
 ```javascript
 // 识别页面字段
@@ -47,22 +59,29 @@ jiraFillerDebug.showStorage()
 
 ## 故障排除
 
-### 1. 浮动按钮不显示
-- 打开开发者工具控制台,检查是否有错误
-- 确认 URL 匹配 `cjira.guazi-corp.com/secure/Dashboard.jspa`
-- 刷新页面重试
+详见 [TESTING.md](docs/TESTING.md)
 
-### 2. 认证失败
-- 确认已登录 Jira
-- 运行 `jiraFillerDebug.showCookies()` 查看是否有 session cookie
-- 运行 `jiraFillerDebug.auth()` 查看认证提取结果
+## 技术架构
 
-### 3. 任务数据提取不正确
-- 运行 `jiraFillerDebug.identifyFields()` 查看页面结构
-- 运行 `jiraFillerDebug.extractTasks()` 查看提取的数据
-- 检查控制台日志
+- **Manifest V3**: 最新 Chrome 扩展标准
+- **Content Scripts**: 页面交互和数据提取
+- **Background Service Worker**: API 调用和批量处理
+- **Chrome Storage**: 配置持久化
 
-### 4. API 更新失败
-- 检查故事点字段 ID 是否正确(可能需要修改 `customfield_10101`)
-- 查看网络请求的响应内容
-- 检查是否有足够的权限
+## 开发
+
+```bash
+# 查看扩展详情
+chrome://extensions/
+
+# 重新加载扩展
+在扩展管理页面点击"重新加载"按钮
+
+# 查看日志
+右键扩展图标 → 检查弹出内容
+Control/Shift + J 打开 Background Service Worker 控制台
+```
+
+## License
+
+MIT
