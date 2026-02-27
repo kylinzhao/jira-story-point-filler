@@ -44,16 +44,92 @@ function createFloatingButton() {
   `;
   button.title = '检查并填充故事点';
 
-  button.addEventListener('click', handleFabClick);
+  button.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showActionMenu();
+  });
 
   document.body.appendChild(button);
   button.style.display = 'flex';
 
   console.log('[Jira Filler] Floating button created');
+
+  // 点击其他地方关闭菜单
+  document.addEventListener('click', () => {
+    hideActionMenu();
+  });
 }
 
-// 处理按钮点击
-async function handleFabClick() {
+// 显示功能菜单
+function showActionMenu() {
+  // 如果菜单已存在,先移除
+  hideActionMenu();
+
+  const menu = document.createElement('div');
+  menu.id = 'jira-filler-menu';
+  menu.innerHTML = `
+    <div class="menu-title">🚀 Jira 故事点工具</div>
+    <div class="menu-item" data-action="update">
+      <span class="menu-icon">⚡</span>
+      <div class="menu-text">
+        <div class="menu-title-text">更新故事点</div>
+        <div class="menu-desc">将 FE Story Points 填充到故事点字段</div>
+      </div>
+    </div>
+    <div class="menu-item" data-action="copy">
+      <span class="menu-icon">📋</span>
+      <div class="menu-text">
+        <div class="menu-title-text">复制未填写需求</div>
+        <div class="menu-desc">复制 FE Story Points 为空的需求列表</div>
+      </div>
+    </div>
+  `;
+
+  // 计算菜单位置
+  const fab = document.getElementById('jira-filler-fab');
+  const fabRect = fab.getBoundingClientRect();
+
+  menu.style.cssText = `
+    position: fixed;
+    bottom: ${fabRect.top + 16}px;
+    right: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    padding: 8px;
+    min-width: 280px;
+    z-index: 10001;
+    animation: slideUp 0.2s ease-out;
+  `;
+
+  // 添加点击事件
+  menu.querySelectorAll('.menu-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const action = item.getAttribute('data-action');
+      hideActionMenu();
+
+      if (action === 'update') {
+        handleUpdateStoryPoints();
+      } else if (action === 'copy') {
+        handleCopyEmptyFePoints();
+      }
+    });
+  });
+
+  document.body.appendChild(menu);
+}
+
+// 隐藏功能菜单
+function hideActionMenu() {
+  const menu = document.getElementById('jira-filler-menu');
+  if (menu) {
+    menu.remove();
+  }
+}
+
+// 处理更新故事点
+async function handleUpdateStoryPoints() {
   console.log('[Jira Filler] FAB clicked, starting process...');
 
   try {
@@ -107,7 +183,7 @@ async function handleFabClick() {
     hideProgressIndicator();
 
     if (response.success) {
-      showResultDialog(response.data);
+      showResultDialog(response.data, tasksToUpdate);
     } else {
       showErrorDialog(response.error);
     }
@@ -195,11 +271,21 @@ function hideProgressIndicator() {
 }
 
 // 显示结果对话框
-function showResultDialog(result) {
-  const message = `更新完成!\n\n` +
-    `总计: ${result.total}\n` +
-    `成功: ${result.succeeded}\n` +
-    `失败: ${result.failed}`;
+function showResultDialog(result, tasksToUpdate) {
+  let message = `✨ 更新完成!\n\n` +
+    `📊 统计信息:\n` +
+    `• 总计: ${result.total}\n` +
+    `• 成功: ${result.succeeded} ✅\n` +
+    `• 失败: ${result.failed} ❌`;
+
+  // 显示成功更新的任务列表
+  if (result.succeeded > 0 && result.results && result.results.length > 0) {
+    message += `\n\n✅ 成功更新的任务:\n`;
+    const successList = result.results.map((r, i) =>
+      `${i + 1}. ${r.issueId}`
+    ).join('\n');
+    message += successList;
+  }
 
   // 在控制台输出详细结果
   console.log('[Jira Filler] Update result:', result);
@@ -207,16 +293,16 @@ function showResultDialog(result) {
   if (result.errors.length > 0) {
     const errorList = result.errors.map(e => `- ${e.task}: ${e.error}`).join('\n');
     console.error('[Jira Filler] Failed tasks:', result.errors);
-    alert(message + '\n\n失败任务:\n' + errorList);
-  } else {
-    alert(message);
+    message += '\n\n❌ 失败任务:\n' + errorList;
   }
+
+  alert(message);
 
   // 刷新页面以显示更新后的数据
   if (result.succeeded > 0) {
     setTimeout(() => {
       location.reload();
-    }, 2000);
+    }, 3000);
   }
 }
 
@@ -236,4 +322,52 @@ function showAuthErrorDialog() {
     '1. 您已登录 Jira\n' +
     '2. 页面已完全加载\n\n' +
     '如果问题持续,请联系管理员。');
+}
+
+// 处理复制未填写 FE Story Points 的需求
+async function handleCopyEmptyFePoints() {
+  console.log('[Jira Filler] Copying tasks without FE Story Points...');
+
+  try {
+    showLoadingIndicator();
+
+    // 提取所有任务
+    const { allTasks } = debugExtractTasks();
+
+    hideLoadingIndicator();
+
+    // 过滤出 FE Story Points 为空的任务
+    const emptyFeTasks = allTasks.filter(task => {
+      const hasNoFePoints = !task.feStoryPoints ||
+                           task.feStoryPoints === '' ||
+                           task.feStoryPoints === '-';
+      return hasNoFePoints;
+    });
+
+    if (emptyFeTasks.length === 0) {
+      alert('✅ 所有任务都已填写 FE Story Points!\n\n无需复制。');
+      return;
+    }
+
+    // 格式化复制内容
+    const copyText = emptyFeTasks.map(task =>
+      `${task.issueId} - ${task.title}`
+    ).join('\n');
+
+    // 复制到剪贴板
+    await navigator.clipboard.writeText(copyText);
+
+    // 显示成功提示
+    const message = `✅ 已复制 ${emptyFeTasks.length} 个未填写 FE Story Points 的需求\n\n` +
+                    `📋 格式: 任务ID - 任务名称\n\n` +
+                    `预览前 5 个:\n${emptyFeTasks.slice(0, 5).map(t => `• ${t.issueId} - ${t.title}`).join('\n')}` +
+                    (emptyFeTasks.length > 5 ? `\n... 还有 ${emptyFeTasks.length - 5} 个` : '');
+
+    alert(message);
+    console.log('[Jira Filler] Copied tasks:', emptyFeTasks);
+  } catch (error) {
+    hideLoadingIndicator();
+    console.error('[Jira Filler] Error copying tasks:', error);
+    alert('复制失败!\n\n错误信息: ' + error.message);
+  }
 }
