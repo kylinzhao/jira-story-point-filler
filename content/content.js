@@ -201,8 +201,12 @@ function showResultDialog(result) {
     `成功: ${result.succeeded}\n` +
     `失败: ${result.failed}`;
 
+  // 在控制台输出详细结果
+  console.log('[Jira Filler] Update result:', result);
+
   if (result.errors.length > 0) {
     const errorList = result.errors.map(e => `- ${e.task}: ${e.error}`).join('\n');
+    console.error('[Jira Filler] Failed tasks:', result.errors);
     alert(message + '\n\n失败任务:\n' + errorList);
   } else {
     alert(message);
@@ -218,7 +222,11 @@ function showResultDialog(result) {
 
 // 显示错误对话框
 function showErrorDialog(error) {
-  alert('更新失败!\n\n错误信息: ' + error);
+  // 在控制台输出详细错误
+  console.error('[Jira Filler] Error occurred:', error);
+  console.error('[Jira Filler] Error stack:', new Error().stack);
+
+  alert('更新失败!\n\n错误信息: ' + error + '\n\n(详细信息已输出到控制台,请按 F12 查看)');
 }
 
 // 显示认证错误对话框

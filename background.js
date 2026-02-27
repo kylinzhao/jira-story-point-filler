@@ -41,7 +41,13 @@ async function handleUpdateIssue(data) {
     const fieldId = config.storyPointFieldId || 'customfield_10101';
     requestBody.fields[fieldId] = feStoryPoints;
 
-    console.log('[Jira Filler] Using field ID:', fieldId);
+    console.log('[Jira Filler] API Request:', {
+      url: apiUrl,
+      method: 'PUT',
+      fieldId,
+      feStoryPoints,
+      requestBody
+    });
 
     const response = await fetch(apiUrl, {
       method: 'PUT',
@@ -53,15 +59,24 @@ async function handleUpdateIssue(data) {
       body: JSON.stringify(requestBody)
     });
 
+    console.log('[Jira Filler] API Response status:', response.status);
+
     if (!response.ok) {
       const errorText = await response.text();
+      console.error('[Jira Filler] API Error Details:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText,
+        headers: Object.fromEntries(response.headers.entries())
+      });
       throw new Error(`API Error ${response.status}: ${errorText}`);
     }
 
     console.log('[Jira Filler] Issue updated successfully:', issueId);
     return { issueId, success: true };
   } catch (error) {
-    console.error('[Jira Filler] Error updating issue:', error);
+    console.error('[Jira Filler] Error updating issue:', issueId, error);
+    console.error('[Jira Filler] Error stack:', error.stack);
     throw error;
   }
 }
