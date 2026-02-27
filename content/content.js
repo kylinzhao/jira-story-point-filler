@@ -89,18 +89,22 @@ function showActionMenu() {
   const fab = document.getElementById('jira-filler-fab');
   const fabRect = fab.getBoundingClientRect();
 
-  // 菜单应该显示在按钮上方
-  const menuTop = fabRect.top - 10; // 按钮上方 10px
+  // 菜单应该显示在按钮上方,估算菜单高度约 200px
+  const estimatedMenuHeight = 200;
+  const menuBottom = fabRect.top - 10; // 按钮上方 10px
+  const menuTop = menuBottom - estimatedMenuHeight;
 
   menu.style.cssText = `
     position: fixed;
-    top: ${menuTop}px;
+    bottom: ${window.innerHeight - fabRect.top + 10}px;
     right: 20px;
     background: white;
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     padding: 8px;
     min-width: 280px;
+    max-height: ${fabRect.top - 20}px;
+    overflow-y: auto;
     z-index: 10001;
     animation: slideUp 0.2s ease-out;
     transform-origin: bottom right;
