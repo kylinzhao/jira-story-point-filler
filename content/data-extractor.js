@@ -21,6 +21,7 @@ function extractTasksFromPage() {
   let headerColumns = [];
   let feStoryPointsIndex = -1;
   let storyPointsIndex = -1;
+  let developerIndex = -1;
 
   // 找到包含"故事点"和"FE Story Points"列的表格
   for (const table of tables) {
@@ -33,6 +34,9 @@ function extractTasksFromPage() {
     storyPointsIndex = headerColumns.findIndex(h =>
       h.includes('故事点') && !h.includes('FE')
     );
+    developerIndex = headerColumns.findIndex(h =>
+      h.includes('开发工程师')
+    );
 
     // 只使用同时包含两个字段的表格
     if (feStoryPointsIndex >= 0 && storyPointsIndex >= 0) {
@@ -40,6 +44,7 @@ function extractTasksFromPage() {
       console.log('[Jira Filler] Found valid table with headers:', headerColumns);
       console.log('[Jira Filler] FE Story Points index:', feStoryPointsIndex);
       console.log('[Jira Filler] Story Points index:', storyPointsIndex);
+      console.log('[Jira Filler] Developer index:', developerIndex);
       break;
     }
   }
@@ -113,6 +118,8 @@ function extractTasksFromPage() {
 
     let feStoryPoints = '';
     let storyPoints = '';
+    let developer = '';
+    let developerFull = ''; // 保存完整的开发工程师信息
 
     // 使用找到的索引提取字段值
     if (feStoryPointsIndex >= 0 && columns[feStoryPointsIndex]) {
@@ -123,14 +130,27 @@ function extractTasksFromPage() {
       storyPoints = columns[storyPointsIndex].textContent.trim();
     }
 
+    if (developerIndex >= 0 && columns[developerIndex]) {
+      developerFull = columns[developerIndex].textContent.trim();
+      // 只保留大前端团队的成员，并提取姓名部分（第一个"-"之前的内容）
+      if (developerFull && developerFull !== '-' &&
+          (developerFull.includes('大前端') || developerFull.includes('前端'))) {
+        const nameMatch = developerFull.match(/^([^-]+)/);
+        if (nameMatch) {
+          developer = nameMatch[1].trim();
+        }
+      }
+    }
+
     // 调试:显示原始值
-    console.log(`[Jira Filler] Row ${index}: issueId=${issueId}, feSP="${feStoryPoints}", sp="${storyPoints}"`);
+    console.log(`[Jira Filler] Row ${index}: issueId=${issueId}, feSP="${feStoryPoints}", sp="${storyPoints}", dev="${developer}"`);
 
     const task = {
       issueId,
       title,
       feStoryPoints,
       storyPoints,
+      developer,
       rowIndex: index
     };
 

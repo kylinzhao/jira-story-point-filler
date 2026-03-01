@@ -80,7 +80,7 @@ function showActionMenu() {
       <span class="menu-icon">📋</span>
       <div class="menu-text">
         <div class="menu-title-text">复制未填写需求</div>
-        <div class="menu-desc">复制 FE Story Points 为空的需求列表</div>
+        <div class="menu-desc">复制大前端团队未填写 FE Story Points 的需求</div>
       </div>
     </div>
   `;
@@ -354,26 +354,40 @@ async function handleCopyEmptyFePoints() {
       const hasNoFePoints = !task.feStoryPoints ||
                            task.feStoryPoints === '' ||
                            task.feStoryPoints === '-';
-      return hasNoFePoints;
+      const hasFrontendDeveloper = task.developer && task.developer !== '';
+      // 只保留有大前端开发人员的任务
+      return hasNoFePoints && hasFrontendDeveloper;
     });
 
     if (emptyFeTasks.length === 0) {
-      alert('✅ 所有任务都已填写 FE Story Points!\n\n无需复制。');
+      const tasksWithoutFePoints = allTasks.filter(task => {
+        const hasNoFePoints = !task.feStoryPoints ||
+                             task.feStoryPoints === '' ||
+                             task.feStoryPoints === '-';
+        return hasNoFePoints;
+      });
+
+      if (tasksWithoutFePoints.length === 0) {
+        alert('✅ 所有任务都已填写 FE Story Points!\n\n无需复制。');
+      } else {
+        alert(`⚠️ 找到 ${tasksWithoutFePoints.length} 个未填写 FE Story Points 的任务，\n` +
+              '但没有大前端团队的开发人员。\n\n这些任务不会被复制。');
+      }
       return;
     }
 
     // 格式化复制内容
     const copyText = emptyFeTasks.map(task =>
-      `${task.issueId} - ${task.title}`
+      `${task.issueId} - ${task.title}${task.developer ? ' - ' + task.developer : ''}`
     ).join('\n');
 
     // 复制到剪贴板
     await navigator.clipboard.writeText(copyText);
 
     // 显示成功提示
-    const message = `✅ 已复制 ${emptyFeTasks.length} 个未填写 FE Story Points 的需求\n\n` +
-                    `📋 格式: 任务ID - 任务名称\n\n` +
-                    `预览前 5 个:\n${emptyFeTasks.slice(0, 5).map(t => `• ${t.issueId} - ${t.title}`).join('\n')}` +
+    const message = `✅ 已复制 ${emptyFeTasks.length} 个未填写 FE Story Points 的大前端需求\n\n` +
+                    `📋 格式: 任务ID - 任务名称 - 开发工程师\n\n` +
+                    `预览前 5 个:\n${emptyFeTasks.slice(0, 5).map(t => `• ${t.issueId} - ${t.title} - ${t.developer}`).join('\n')}` +
                     (emptyFeTasks.length > 5 ? `\n... 还有 ${emptyFeTasks.length - 5} 个` : '');
 
     alert(message);
